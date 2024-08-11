@@ -2,38 +2,47 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"time"
+
+	"github.com/dmytrodemianchuk/go-auth-mongo/internal/domain"
 )
 
-// BooksRepository defines the interface for book operations.
 type BooksRepository interface {
-	CreateBook(ctx context.Context, book interface{}) error
-	GetBooks(ctx context.Context) ([]interface{}, error)
+	Create(ctx context.Context, book domain.Book) error
+	GetByID(ctx context.Context, id string) (domain.Book, error)
+	GetAll(ctx context.Context) ([]domain.Book, error)
+	Delete(ctx context.Context, id string) error
+	Update(ctx context.Context, id string, inp domain.Book) error
 }
 
-// BooksService provides methods to interact with book data.
-type BooksService struct {
+type Books struct {
 	repo BooksRepository
 }
 
-// NewBooks creates a new BooksService.
-func NewBooks(repo BooksRepository) *BooksService {
-	return &BooksService{repo: repo}
+func NewBooks(repo BooksRepository) *Books {
+	return &Books{repo: repo}
 }
 
-// AddBook adds a new book to the repository.
-func (s *BooksService) AddBook(ctx context.Context, book interface{}) error {
-	if err := s.repo.CreateBook(ctx, book); err != nil {
-		return fmt.Errorf("failed to add book: %w", err)
+func (s *Books) Create(ctx context.Context, book domain.Book) error {
+	if book.PublishDate.IsZero() {
+		book.PublishDate = time.Now()
 	}
-	return nil
+
+	return s.repo.Create(ctx, book)
 }
 
-// ListBooks retrieves all books from the repository.
-func (s *BooksService) ListBooks(ctx context.Context) ([]interface{}, error) {
-	books, err := s.repo.GetBooks(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list books: %w", err)
-	}
-	return books, nil
+func (s *Books) GetByID(ctx context.Context, id string) (domain.Book, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *Books) GetAll(ctx context.Context) ([]domain.Book, error) {
+	return s.repo.GetAll(ctx)
+}
+
+func (s *Books) Delete(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *Books) Update(ctx context.Context, id string, inp domain.Book) error {
+	return s.repo.Update(ctx, id, inp)
 }
